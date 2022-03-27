@@ -38,7 +38,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  webview_flutter: ^3.0.1
+  # webview_flutter: ^3.0.1
+  flutter_webview_plugin: ^0.4.0
   path_provider: ^2.0.9
 
   # The "flutter_lints" package below contains a set of recommended lints to
