@@ -2,15 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 
-// ページ読み込み終了が取れない？
-// JavaScriptでソースの取得はできる
+const kAndroidUserAgent ='Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Mobile Safari/537.36';
 
-
-
-const kAndroidUserAgent =
-    'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Mobile Safari/537.36';
-
-String selectedUrl = 'https://flutter.io';
+String selectedUrl = 'https://yahoo.co.jp';
 
 // ignore: prefer_collection_literals
 final Set<JavascriptChannel> jsChannels = [
@@ -27,10 +21,19 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  final flutterWebViewPlugin = FlutterWebviewPlugin();
+  final flutterWebViewPlugin = new FlutterWebviewPlugin();
 
   @override
   Widget build(BuildContext context) {
+
+    flutterWebViewPlugin.onStateChanged.listen((WebViewStateChanged state) async {
+      String url = state.url; // 読み込んだページ
+      WebViewState type = state.type; // 読み込みステータス
+      debugPrint('==================== type $type');
+      if (type == WebViewState.finishLoad) {
+      }
+    });
+
     return MaterialApp(
       title: 'Flutter WebView Demo',
       theme: ThemeData(
@@ -76,6 +79,16 @@ class MyApp extends StatelessWidget {
                       flutterWebViewPlugin.reload();
                     },
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.adb_outlined),
+                    onPressed: () {
+                      //final future = flutterWebViewPlugin.evalJavascript('alert("Hello World");');
+                      final future = flutterWebViewPlugin.evalJavascript('document.getElementsByTagName("html")[0].outerHTML;');
+                      future.then((String? result) {
+                        debugPrint('eval: $result');
+                      });
+                    },
+                  ),
                 ],
               ),
             ),
@@ -87,14 +100,14 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
+
   const MyHomePage({Key? key, required this.title}) : super(key: key);
-
   final String title;
-
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
+// ここはなにしてる？
 class _MyHomePageState extends State<MyHomePage> {
   // Instance of WebView plugin
   final flutterWebViewPlugin = FlutterWebviewPlugin();
@@ -118,11 +131,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final _urlCtrl = TextEditingController(text: selectedUrl);
 
-  final _codeCtrl = TextEditingController(text: 'window.navigator.userAgent');
+  // final _codeCtrl = TextEditingController(text: 'window.navigator.userAgent');
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-
-  final _history = [];
 
   @override
   void initState() {
@@ -147,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _onUrlChanged = flutterWebViewPlugin.onUrlChanged.listen((String url) {
       if (mounted) {
         setState(() {
-          _history.add('onUrlChanged: $url');
+          debugPrint('onUrlChanged: $url');
         });
       }
     });
@@ -156,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
         flutterWebViewPlugin.onProgressChanged.listen((double progress) {
           if (mounted) {
             setState(() {
-              _history.add('onProgressChanged: $progress');
+              debugPrint('onProgressChanged: $progress');
             });
           }
         });
@@ -165,7 +176,7 @@ class _MyHomePageState extends State<MyHomePage> {
         flutterWebViewPlugin.onScrollYChanged.listen((double y) {
           if (mounted) {
             setState(() {
-              _history.add('Scroll in Y Direction: $y');
+              debugPrint('Scroll in Y Direction: $y');
             });
           }
         });
@@ -174,16 +185,17 @@ class _MyHomePageState extends State<MyHomePage> {
         flutterWebViewPlugin.onScrollXChanged.listen((double x) {
           if (mounted) {
             setState(() {
-              _history.add('Scroll in X Direction: $x');
+              debugPrint('Scroll in X Direction: $x');
             });
           }
         });
 
     _onStateChanged =
         flutterWebViewPlugin.onStateChanged.listen((WebViewStateChanged state) {
+          debugPrint('onStateChanged: ${state.type} ${state.url}');
           if (mounted) {
             setState(() {
-              _history.add('onStateChanged: ${state.type} ${state.url}');
+              debugPrint('onStateChanged: ${state.type} ${state.url}');
             });
           }
         });
@@ -192,7 +204,7 @@ class _MyHomePageState extends State<MyHomePage> {
         flutterWebViewPlugin.onHttpError.listen((WebViewHttpError error) {
           if (mounted) {
             setState(() {
-              _history.add('onHttpError: ${error.code} ${error.url}');
+              debugPrint('onHttpError: ${error.code} ${error.url}');
             });
           }
         });
@@ -229,85 +241,85 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: const EdgeInsets.all(24.0),
               child: TextField(controller: _urlCtrl),
             ),
-            ElevatedButton(
-              onPressed: () {
-                flutterWebViewPlugin.launch(
-                  selectedUrl,
-                  rect: Rect.fromLTWH(
-                      0.0, 0.0, MediaQuery.of(context).size.width, 300.0),
-                  userAgent: kAndroidUserAgent,
-                  invalidUrlRegex:
-                  r'^(https).+(twitter)', // prevent redirecting to twitter when user click on its icon in flutter website
-                );
-              },
-              child: const Text('Open Webview (rect)'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                flutterWebViewPlugin.launch(selectedUrl, hidden: true);
-              },
-              child: const Text('Open "hidden" Webview'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                flutterWebViewPlugin.launch(selectedUrl);
-              },
-              child: const Text('Open Fullscreen Webview'),
-            ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     flutterWebViewPlugin.launch(
+            //       selectedUrl,
+            //       rect: Rect.fromLTWH(
+            //           0.0, 0.0, MediaQuery.of(context).size.width, 300.0),
+            //       userAgent: kAndroidUserAgent,
+            //       invalidUrlRegex:
+            //       r'^(https).+(twitter)', // prevent redirecting to twitter when user click on its icon in flutter website
+            //     );
+            //   },
+            //   child: const Text('Open Webview (rect)'),
+            // ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     flutterWebViewPlugin.launch(selectedUrl, hidden: true);
+            //   },
+            //   child: const Text('Open "hidden" Webview'),
+            // ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     flutterWebViewPlugin.launch(selectedUrl);
+            //   },
+            //   child: const Text('Open Fullscreen Webview'),
+            // ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pushNamed('/widget');
               },
               child: const Text('Open widget webview'),
             ),
-            Container(
-              padding: const EdgeInsets.all(24.0),
-              child: TextField(controller: _codeCtrl),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final future =
-                flutterWebViewPlugin.evalJavascript(_codeCtrl.text);
-                future.then((String? result) {
-                  setState(() {
-                    _history.add('eval: $result');
-                  });
-                });
-              },
-              child: const Text('Eval some javascript'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final future = flutterWebViewPlugin
-                    .evalJavascript('alert("Hello World");');
-                future.then((String? result) {
-                  setState(() {
-                    _history.add('eval: $result');
-                  });
-                });
-              },
-              child: const Text('Eval javascript alert()'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _history.clear();
-                });
-                flutterWebViewPlugin.close();
-              },
-              child: const Text('Close'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                flutterWebViewPlugin.getCookies().then((m) {
-                  setState(() {
-                    _history.add('cookies: $m');
-                  });
-                });
-              },
-              child: const Text('Cookies'),
-            ),
-            Text(_history.join('\n'))
+            // Container(
+            //   padding: const EdgeInsets.all(24.0),
+            //   child: TextField(controller: _codeCtrl),
+            // ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     final future =
+            //     flutterWebViewPlugin.evalJavascript(_codeCtrl.text);
+            //     future.then((String? result) {
+            //       setState(() {
+            //         _history.add('eval: $result');
+            //       });
+            //     });
+            //   },
+            //   child: const Text('Eval some javascript'),
+            // ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     final future = flutterWebViewPlugin
+            //         .evalJavascript('alert("Hello World");');
+            //     future.then((String? result) {
+            //       setState(() {
+            //         _history.add('eval: $result');
+            //       });
+            //     });
+            //   },
+            //   child: const Text('Eval javascript alert()'),
+            // ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     setState(() {
+            //       _history.clear();
+            //     });
+            //     flutterWebViewPlugin.close();
+            //   },
+            //   child: const Text('Close'),
+            // ),
+            // ElevatedButton(
+            //   onPressed: () {
+            //     flutterWebViewPlugin.getCookies().then((m) {
+            //       setState(() {
+            //         _history.add('cookies: $m');
+            //       });
+            //     });
+            //   },
+            //   child: const Text('Cookies'),
+            // ),
+            // Text(_history.join('\n'))  // ログ表示部
           ],
         ),
       ),

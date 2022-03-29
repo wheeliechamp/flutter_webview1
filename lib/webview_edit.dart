@@ -31,7 +31,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  late WebViewController _controller;
 
   void _incrementCounter() {
     setState(() {
@@ -45,24 +44,13 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Builder(builder: (BuildContext context) {
-        return WebView(
-          // onWebViewCreatedはWebViewが生成された時に行う処理を記述できます
-          onWebViewCreated: (WebViewController webViewController) async {
-            _controller = webViewController; // 生成されたWebViewController情報を取得する
-          },
+      body: const SizedBox(
+        child: WebView(
           initialUrl: 'https://yahoo.co.jp',
           userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36',
           javascriptMode: JavascriptMode.unrestricted,
-          onPageFinished: (String url) {
-            print('Page finished loading: $url');
-            final future = _controller.runJavascript('document.getElementsByTagName("html")[0].outerHTML;');
-            future.then((String? result) {
-              debugPrint('eval: $result');
-            });
-          },
-        );
-      }),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
