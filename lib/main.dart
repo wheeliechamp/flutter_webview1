@@ -38,12 +38,39 @@ class _MyHomePageState extends State<MyHomePage> {
       _counter++;
     });
   }
-//462
+
+  // flutter 並列処理 isolate で検索
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Row(
+          children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios),
+              onPressed: () {
+                _controller.goBack();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_forward_ios),
+              onPressed: () {
+                _controller.goForward();
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.autorenew),
+              onPressed: () {
+                _controller.reload();
+                // ここら辺のボタン押下でメソッドを実行すればいいのか？
+              },
+            ),
+          ],
+        ),
       ),
       body: Builder(builder: (BuildContext context) {
         return WebView(
@@ -56,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
           javascriptMode: JavascriptMode.unrestricted,
           onPageFinished: (String url) {
             print('Page finished loading: $url');
-            final future = _controller.runJavascript('document.getElementsByTagName("html")[0].outerHTML;');
+            final future = _controller.runJavascriptReturningResult('document.getElementsByTagName("html")[0].outerHTML;');
             future.then((String? result) {
               debugPrint('eval: $result');
             });
