@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+// shared_preferences
 
 void main() {
   runApp(const MyApp());
@@ -65,13 +69,20 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: const Icon(Icons.autorenew),
               onPressed: () {
-                _controller.reload();
+                // https://api.flutter.dev/flutter/dart-async/Timer/Timer.periodic.html
+                Timer.periodic(
+                    Duration(seconds: 10),
+                    (timer) {
+                      _controller.reload();
+                    }
+                );
                 // ここら辺のボタン押下でメソッドを実行すればいいのか？
               },
             ),
           ],
         ),
       ),
+
       body: Builder(builder: (BuildContext context) {
         return WebView(
           // onWebViewCreatedはWebViewが生成された時に行う処理を記述できます
@@ -83,8 +94,8 @@ class _MyHomePageState extends State<MyHomePage> {
           javascriptMode: JavascriptMode.unrestricted,
           onPageFinished: (String url) {
             print('Page finished loading: $url');
-            final future = _controller.runJavascriptReturningResult('document.getElementsByTagName("html")[0].outerHTML;');
-            future.then((String? result) {
+            final aaa = _controller.runJavascriptReturningResult('document.getElementsByTagName("html")[0].outerHTML;');
+            aaa.then((String? result) {
               debugPrint('eval: $result');
             });
           },
