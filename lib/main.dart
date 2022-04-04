@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_countdown_timer/countdown.dart';
+import 'package:flutter_countdown_timer/countdown_controller.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 // shared_preferences
@@ -37,87 +39,46 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   late WebViewController _controller;
 
-  void _incrementCounter() {
+  late CountdownController countdownController = CountdownController(duration: Duration(seconds: 10), onEnd: () {
+    print('onEnd');
+    countdownController.start();
     setState(() {
-      _counter++;
+      isRunning = true;
     });
-  }
-
-  // flutter 並列処理 isolate で検索
+  });
+  bool isRunning = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
+      body: Center(
+        child: Countdown(
+            countdownController: countdownController,
+            builder: (_, Duration time) {
+              return Text(
+                '${time.inSeconds}',
+                //'hours: ${time.inHours} minutes: ${time.inMinutes % 60} seconds: ${time.inSeconds % 60}',
+                style: TextStyle(fontSize: 20),
+              );
+            }),
       ),
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          children: <Widget>[
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios),
-              onPressed: () {
-                _controller.goBack();
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.arrow_forward_ios),
-              onPressed: () {
-                _controller.goForward();
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.autorenew),
-              onPressed: () {
-                // https://api.flutter.dev/flutter/dart-async/Timer/Timer.periodic.html
-                Timer.periodic(
-                    Duration(seconds: 10),
-                    (timer) {
-                      _controller.reload();
-                    }
-                );
-                // ここら辺のボタン押下でメソッドを実行すればいいのか？
-              },
-            ),
-          ],
-        ),
-      ),
-
-      body: Builder(builder: (BuildContext context) {
-        return WebView(
-          // onWebViewCreatedはWebViewが生成された時に行う処理を記述できます
-          onWebViewCreated: (WebViewController webViewController) async {
-            _controller = webViewController; // 生成されたWebViewController情報を取得する
-          },
-          initialUrl: 'https://yahoo.co.jp',
-          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.74 Safari/537.36',
-          javascriptMode: JavascriptMode.unrestricted,
-          onPageFinished: (String url) {
-            print('Page finished loading: $url');
-            final aaa = _controller.runJavascriptReturningResult('document.getElementsByTagName("html")[0].outerHTML;');
-            aaa.then((String? result) {
-              debugPrint('eval: $result');
-            });
-          },
-        );
-      }),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+        child:
+        Icon(isRunning ? Icons.stop : Icons.play_arrow),
+        onPressed: () {
+          if (!countdownController.isRunning) {
+            countdownController.start();
+            setState(() {
+              isRunning = true;
+            });
+          } else {
+            countdownController.stop();
+            setState(() {
+              isRunning = false;
+            });
+          }
+        },
+      ),
     );
   }
-
-  JavascriptChannel _toasterJavascriptChannel(BuildContext context) {
-    return JavascriptChannel(
-        name: 'Toaster',
-        onMessageReceived: (JavascriptMessage message) {
-          // ignore: deprecated_member_use
-          Scaffold.of(context).showSnackBar(
-            SnackBar(content: Text(message.message)),
-          );
-        });
-  }
-
 }
