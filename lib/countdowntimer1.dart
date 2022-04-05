@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_countdown_timer/countdown.dart';
 import 'package:flutter_countdown_timer/countdown_controller.dart';
-import 'package:flutter_countdown_timer/countdown_timer_controller.dart';
-import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 // shared_preferences
@@ -34,49 +32,53 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
+  late WebViewController _controller;
 
-  late CountdownTimerController controller;
-  int endTime = DateTime.now().millisecondsSinceEpoch + 1000 * 30;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = CountdownTimerController(endTime: endTime, onEnd: onEnd);
-  }
-
-  void onEnd() {
+  late CountdownController countdownController = CountdownController(duration: Duration(seconds: 10), onEnd: () {
     print('onEnd');
-  }
+    countdownController.start();
+    setState(() {
+      isRunning = true;
+    });
+  });
+  bool isRunning = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: CountdownTimer(
-          controller: controller,
-          onEnd: onEnd,
-          endTime: endTime,
-        ),
+        child: Countdown(
+            countdownController: countdownController,
+            builder: (_, Duration time) {
+              return Text(
+                '${time.inSeconds}',
+                //'hours: ${time.inHours} minutes: ${time.inMinutes % 60} seconds: ${time.inSeconds % 60}',
+                style: TextStyle(fontSize: 20),
+              );
+            }),
       ),
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.stop),
+        child:
+        Icon(isRunning ? Icons.stop : Icons.play_arrow),
         onPressed: () {
-          onEnd();
-          endTime = DateTime.now().millisecondsSinceEpoch + 1000 * 30;
-          controller = CountdownTimerController(endTime: endTime, onEnd: onEnd);
-          //controller.disposeTimer();
+          if (!countdownController.isRunning) {
+            countdownController.start();
+            setState(() {
+              isRunning = true;
+            });
+          } else {
+            countdownController.stop();
+            setState(() {
+              isRunning = false;
+            });
+          }
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
   }
 }
